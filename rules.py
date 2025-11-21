@@ -1,3 +1,4 @@
+"""Security rule implementations for the CI/CD security linter."""
 """Security rule stubs for the CI/CD security linter skeleton."""
 from __future__ import annotations
 
@@ -54,6 +55,15 @@ def check_secret_exposure(workflow: WorkflowConfig) -> list[Finding]:
     return findings
 
 
+def _is_dangerous_command(run: str | None) -> bool:
+    """Return True if a command includes download-and-execute patterns."""
+
+    if not run:
+        return False
+    cmd = run.lower()
+    return ("curl" in cmd and "bash" in cmd) or ("wget" in cmd and "sh" in cmd)
+
+
 def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
     """
     Rule: detect dangerous command patterns such as curl|bash or wget|sh.
@@ -86,6 +96,26 @@ def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
                 )
 
     return findings
+
+
+def _job_matches(job_id: str, job_name: str | None, keyword: str) -> bool:
+    """Check whether a job id or name contains the given keyword (case-insensitive)."""
+
+    jid = job_id.lower()
+    jname = (job_name or "").lower()
+    return keyword in jid or keyword in jname
+
+
+def _workflow_has_quality_steps(workflow: WorkflowConfig) -> bool:
+    """Determine whether any step mentions quality or security related keywords."""
+
+    keywords = ("test", "lint", "scan", "security", "audit")
+    for job in workflow.jobs:
+        for step in job.steps:
+            text = f"{step.name or ''} {step.run or ''}".lower()
+            if any(keyword in text for keyword in keywords):
+                return True
+    return False
 from models import Finding, WorkflowConfig
 
 
@@ -107,6 +137,47 @@ def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
 
 def check_pipeline_design(workflow: WorkflowConfig) -> list[Finding]:
     """
+    Check pipeline design issues such as missing tests before deploy or absent quality/security steps.
+    """
+
+    findings: list[Finding] = []
+
+    deploy_jobs = [job for job in workflow.jobs if _job_matches(job.id, job.name, "deploy")]
+    test_jobs = [job for job in workflow.jobs if _job_matches(job.id, job.name, "test")]
+
+    if deploy_jobs and not test_jobs:
+        findings.append(
+            Finding(
+                id="pipeline_missing_test_before_deploy",
+                severity="MEDIUM",
+                rule_id="WEAK_PIPELINE_DESIGN",
+                title="Deploy jobs found without explicit test jobs",
+                description=(
+                    "The workflow defines deployment jobs but does not contain any explicit test jobs. "
+                    "This increases the risk of releasing untested changes."
+                ),
+                job_id=deploy_jobs[0].id if deploy_jobs else None,
+                step_name=None,
+            )
+        )
+
+    if not _workflow_has_quality_steps(workflow):
+        findings.append(
+            Finding(
+                id="pipeline_missing_quality_checks",
+                severity="LOW",
+                rule_id="WEAK_PIPELINE_DESIGN",
+                title="No explicit quality or security checks detected",
+                description=(
+                    "No steps mentioning test, lint, scan, security, or audit were detected. "
+                    "Consider adding explicit quality and security checks in the pipeline."
+                ),
+                job_id=None,
+                step_name=None,
+            )
+        )
+
+    return findings
     Rule: check basic pipeline design issues: missing test jobs, missing security/audit steps, etc.
     Stub only in this step.
     """
