@@ -52,6 +52,40 @@ def check_secret_exposure(workflow: WorkflowConfig) -> list[Finding]:
                 )
 
     return findings
+
+
+def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
+    """
+    Rule: detect dangerous command patterns such as curl|bash or wget|sh.
+    """
+
+    def _is_dangerous_command(run: str | None) -> bool:
+        if not run:
+            return False
+        cmd = run.lower()
+        return ("curl" in cmd and "bash" in cmd) or ("wget" in cmd and "sh" in cmd)
+
+    findings: list[Finding] = []
+
+    for job in workflow.jobs:
+        for index, step in enumerate(job.steps):
+            if _is_dangerous_command(step.run):
+                findings.append(
+                    Finding(
+                        id=f"{job.id}_dangerous_command_{index}",
+                        severity="HIGH",
+                        rule_id="DANGEROUS_COMMAND",
+                        title=f"Dangerous command pattern in job '{job.id}'",
+                        description=(
+                            "This step uses a potentially dangerous download-and-execute pattern "
+                            "such as 'curl | bash' or 'wget | sh', which can be abused by attackers."
+                        ),
+                        job_id=job.id,
+                        step_name=step.name,
+                    )
+                )
+
+    return findings
 from models import Finding, WorkflowConfig
 
 
