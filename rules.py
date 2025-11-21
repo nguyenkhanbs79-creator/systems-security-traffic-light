@@ -1,4 +1,5 @@
 """Security rule implementations for the CI/CD security linter."""
+"""Security rule stubs for the CI/CD security linter skeleton."""
 from __future__ import annotations
 
 import re
@@ -68,6 +69,12 @@ def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
     Rule: detect dangerous command patterns such as curl|bash or wget|sh.
     """
 
+    def _is_dangerous_command(run: str | None) -> bool:
+        if not run:
+            return False
+        cmd = run.lower()
+        return ("curl" in cmd and "bash" in cmd) or ("wget" in cmd and "sh" in cmd)
+
     findings: list[Finding] = []
 
     for job in workflow.jobs:
@@ -109,6 +116,23 @@ def _workflow_has_quality_steps(workflow: WorkflowConfig) -> bool:
             if any(keyword in text for keyword in keywords):
                 return True
     return False
+from models import Finding, WorkflowConfig
+
+
+def check_secret_exposure(workflow: WorkflowConfig) -> list[Finding]:
+    """
+    Rule: detect potential secret exposure (hard-coded API keys, tokens, passwords).
+    For now, this is just a stub with no real implementation.
+    """
+    raise NotImplementedError()
+
+
+def check_dangerous_commands(workflow: WorkflowConfig) -> list[Finding]:
+    """
+    Rule: detect dangerous command patterns such as curl|bash or wget|sh.
+    Stub only in this step.
+    """
+    raise NotImplementedError()
 
 
 def check_pipeline_design(workflow: WorkflowConfig) -> list[Finding]:
@@ -154,3 +178,7 @@ def check_pipeline_design(workflow: WorkflowConfig) -> list[Finding]:
         )
 
     return findings
+    Rule: check basic pipeline design issues: missing test jobs, missing security/audit steps, etc.
+    Stub only in this step.
+    """
+    raise NotImplementedError()
