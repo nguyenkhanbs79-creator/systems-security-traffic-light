@@ -1,4 +1,6 @@
-"""Scoring utilities for the CI/CD security linter skeleton."""
+"""Scoring utilities for the CI/CD security linter."""
+from __future__ import annotations
+
 from models import Finding
 
 
@@ -43,16 +45,3 @@ def traffic_light(risk_level: str) -> str:
     }
 
     return mapping.get(risk_level, "⬜")
-    """
-    Compute an overall security score (0–100) based on findings.
-    In this step, do not implement the scoring logic yet.
-    """
-    raise NotImplementedError()
-
-
-def classify_risk(score: int) -> str:
-    """
-    Classify risk level from the score: LOW, MEDIUM, or HIGH.
-    In this step, do not implement the actual thresholds yet.
-    """
-    raise NotImplementedError()
