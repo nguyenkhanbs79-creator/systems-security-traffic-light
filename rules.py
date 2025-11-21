@@ -10,8 +10,12 @@ def _run_looks_like_secret(cmd: str) -> bool:
     """Return True if a run command appears to contain hard-coded secrets."""
 
     lowered = cmd.lower()
+
+    # Simple keyword checks
     if "api_key=" in lowered or "token=" in lowered or "password" in lowered:
         return True
+
+    # Heuristic for long random-looking strings (potential tokens)
     return bool(re.search(r"[A-Za-z0-9]{20,}", cmd))
 
 
@@ -113,7 +117,8 @@ def _workflow_has_quality_steps(workflow: WorkflowConfig) -> bool:
 
 def check_pipeline_design(workflow: WorkflowConfig) -> list[Finding]:
     """
-    Check pipeline design issues such as missing tests before deploy or absent quality/security steps.
+    Check pipeline design issues such as missing tests before deploy
+    or absent quality/security steps.
     """
 
     findings: list[Finding] = []

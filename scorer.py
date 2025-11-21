@@ -1,4 +1,6 @@
-"""Scoring utilities for the CI/CD security linter skeleton."""
+"""Scoring utilities for the CI/CD security linter."""
+from __future__ import annotations
+
 from models import Finding
 
 
