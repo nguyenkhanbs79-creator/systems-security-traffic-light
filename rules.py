@@ -162,7 +162,6 @@ def check_pipeline_design(workflow: WorkflowConfig) -> list[Finding]:
         )
 
     if not _workflow_has_quality_steps(workflow):
-        findings.append(
             Finding(
                 id="pipeline_missing_quality_checks",
                 severity="LOW",
